@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Android Smart Bed Remote</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="settings">Settings</string>
 </resources>
