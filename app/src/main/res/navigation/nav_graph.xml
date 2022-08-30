@@ -9,5 +9,14 @@
         android:id="@+id/remoteFragment"
         android:name="com.example.androidsmartbedremote.RemoteFragment"
         android:label="fragment_remote"
-        tools:layout="@layout/fragment_remote" />
+        tools:layout="@layout/fragment_remote" >
+        <action
+            android:id="@+id/action_remoteFragment_to_bluetoothFragment"
+            app:destination="@id/bluetoothFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/bluetoothFragment"
+        android:name="com.example.androidsmartbedremote.BluetoothFragment"
+        android:label="fragment_bluetooth"
+        tools:layout="@layout/fragment_bluetooth" />
 </navigation>
