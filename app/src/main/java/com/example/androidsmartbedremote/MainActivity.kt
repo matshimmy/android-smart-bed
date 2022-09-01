@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
+
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         navController = navHostFragment.navController
@@ -60,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun hideOverflowMenu() {
-        overflowMenu.findItem(R.id.bluetooth_connection).setVisible(false)
-        overflowMenu.findItem(R.id.settings).setVisible(false)
+        overflowMenu.findItem(R.id.bluetooth_connection).isVisible = false
+        overflowMenu.findItem(R.id.settings).isVisible = false
     }
 }
