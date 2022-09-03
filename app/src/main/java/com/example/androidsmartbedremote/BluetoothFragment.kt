@@ -47,6 +47,14 @@ class BluetoothFragment : Fragment() {
     // Bluetooth functions above these will be refactored to a view model once
     // fragment development is complete
 
+    private lateinit var btnScan: Button
+
+    private var isScanning = false
+        set(value) {
+            field = value
+            activity?.runOnUiThread { btnScan.text = if (value) "Stop Scan" else "Start Scan" }
+        }
+
     private val isLocationPermissionGranted
         get() = context?.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
 
@@ -55,8 +63,6 @@ class BluetoothFragment : Fragment() {
 
     private val isScanPermissionGranted
         get() = context?.hasPermission(Manifest.permission.BLUETOOTH_SCAN)
-
-    private val scanResults = mutableListOf<ScanResult>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -68,7 +74,14 @@ class BluetoothFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.findViewById<Button>(R.id.scan_button).setOnClickListener { startBleScan() }
+        btnScan = view.findViewById(R.id.scan_button)
+        btnScan.setOnClickListener {
+            if (isScanning) {
+                stopBleScan()
+            } else {
+                startBleScan()
+            }
+        }
 
     }
 
@@ -84,7 +97,14 @@ class BluetoothFragment : Fragment() {
             bluetoothEnable()
         } else {
             bleScanner.startScan(null, scanSettings, scanCallback)
+            isScanning = true
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun stopBleScan() {
+        bleScanner.stopScan(scanCallback)
+        isScanning = false
     }
 
     private val scanCallback = object : ScanCallback() {
