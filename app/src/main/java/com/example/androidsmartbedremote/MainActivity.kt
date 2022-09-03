@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                 || super.onSupportNavigateUp()
     }
 
-    fun hideOverflowMenu() {
+    private fun hideOverflowMenu() {
         overflowMenu.findItem(R.id.bluetooth_connection).isVisible = false
         overflowMenu.findItem(R.id.settings).isVisible = false
     }

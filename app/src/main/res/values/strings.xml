@@ -2,6 +2,6 @@
     <string name="app_name">Android Smart Bed Remote</string>
     <string name="bluetooth">Bluetooth</string>
     <string name="settings">Settings</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="start_scan">Start Scan</string>
+    <string name="btn_bed_control1">raise bed</string>
 </resources>

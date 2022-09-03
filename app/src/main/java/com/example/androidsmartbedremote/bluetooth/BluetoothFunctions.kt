@@ -14,5 +14,4 @@ object BluetoothFunctions {
         bluetoothAdapter = bluetoothManager.getAdapter()
     }
 
-
 }

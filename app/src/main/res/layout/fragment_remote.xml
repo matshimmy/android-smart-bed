@@ -8,10 +8,10 @@
 
 
     <Button
-        android:id="@+id/btnRequestPermissions"
+        android:id="@+id/btnBedControl1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="request permissions"
+        android:text="@string/btn_bed_control1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
