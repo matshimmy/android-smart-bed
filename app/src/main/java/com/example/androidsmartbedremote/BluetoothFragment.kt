@@ -4,8 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
+import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -13,6 +12,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -23,6 +24,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.androidsmartbedremote.ble.printGattTable
 
 
 @SuppressLint("MissingPermission")
@@ -47,6 +49,43 @@ class BluetoothFragment : Fragment() {
         startActivityForResult(enableBtIntent, 0)
     }
 
+    private var gattReference: BluetoothGatt? = null
+
+    private val gattCallback = object : BluetoothGattCallback() {
+        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            val deviceAddress = gatt?.device?.address
+
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    Log.w("BluetoothGattCallback", "Successfully connected to $deviceAddress")
+                    gattReference = gatt
+                    Handler(Looper.getMainLooper()).post { // forces discovery service to run on main thread prevents deadlock issue
+                        gatt?.discoverServices()
+                    }
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.w("BluetoothGattCallback", "Successfully disconnected from $deviceAddress")
+                    gatt?.close()
+                }
+            } else {
+                Log.w(
+                    "BluetoothGattCallback",
+                    "Error $ encountered for $deviceAddress! Disconnecting..."
+                )
+                gatt?.close()
+            }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            with(gatt) {
+                Log.w(
+                    "BluetoothGattCallback",
+                    "Discovered ${services.size} services for ${device.address}"
+                )
+                printGattTable()
+            }
+        }
+    }
+
     // Bluetooth functions above these will be refactored to a view model once
     // fragment development is complete
 
@@ -61,7 +100,11 @@ class BluetoothFragment : Fragment() {
     private val scanResults = mutableListOf<ScanResult>()
     private val scanResultAdapter: ScanResultAdapter by lazy {
         ScanResultAdapter(scanResults) { result ->
-            Log.d("scanResultAdapter", "${result.device.name} was pressed")
+            Log.w("scanResultAdapter", "${result.device.name} was pressed")
+            if (isScanning) {
+                stopBleScan()
+            }
+            result.device.connectGatt(context, false, gattCallback)
         }
     }
 
