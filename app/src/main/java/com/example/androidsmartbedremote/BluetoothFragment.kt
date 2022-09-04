@@ -21,8 +21,11 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 
+@SuppressLint("MissingPermission")
 class BluetoothFragment : Fragment() {
 
     private val bluetoothAdapter: BluetoothAdapter by lazy {
@@ -55,6 +58,13 @@ class BluetoothFragment : Fragment() {
             activity?.runOnUiThread { btnScan.text = if (value) "Stop Scan" else "Start Scan" }
         }
 
+    private val scanResults = mutableListOf<ScanResult>()
+    private val scanResultAdapter: ScanResultAdapter by lazy {
+        ScanResultAdapter(scanResults) { result ->
+            Log.d("scanResultAdapter", "${result.device.name} was pressed")
+        }
+    }
+
     private val isLocationPermissionGranted
         get() = context?.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
 
@@ -82,10 +92,23 @@ class BluetoothFragment : Fragment() {
                 startBleScan()
             }
         }
+        setupRecyclerView(view)
+    }
+
+    private fun setupRecyclerView(view: View) {
+        view.findViewById<RecyclerView>(R.id.scan_results_recycler_view).apply {
+            adapter = scanResultAdapter
+            layoutManager = LinearLayoutManager(
+                context,
+                RecyclerView.VERTICAL,
+                false
+            )
+            isNestedScrollingEnabled = false
+        }
 
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "NotifyDataSetChanged")
     private fun startBleScan() {
         if (!isLocationPermissionGranted!!) {
             requestLocationPermission()
@@ -96,6 +119,8 @@ class BluetoothFragment : Fragment() {
         } else if (!bluetoothAdapter.isEnabled) {
             bluetoothEnable()
         } else {
+            scanResults.clear()
+            scanResultAdapter.notifyDataSetChanged()
             bleScanner.startScan(null, scanSettings, scanCallback)
             isScanning = true
         }
@@ -110,12 +135,18 @@ class BluetoothFragment : Fragment() {
     private val scanCallback = object : ScanCallback() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            with(result.device) {
-                Log.i(
-                    "ScanCallback",
-                    "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address"
-                )
+            val indexQuery = scanResults.indexOfFirst { it.device.address == result.device.address }
+            if (indexQuery != -1) { // a scan result already exists with the same address
+                scanResults[indexQuery] = result // update item
+                scanResultAdapter.notifyItemChanged(indexQuery)
+            } else {
+                scanResults.add(result)
+                scanResultAdapter.notifyItemInserted(scanResults.size - 1)
             }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            Log.e("ScanCallback", "onScanFailed: code $errorCode")
         }
     }
 
