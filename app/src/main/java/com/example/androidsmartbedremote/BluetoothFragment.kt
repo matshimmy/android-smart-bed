@@ -115,14 +115,16 @@ class BluetoothFragment : Fragment() {
 
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
     private fun startBleScan() {
+        scanResults.clear()
+        scanResultAdapter.notifyDataSetChanged()
+        // May need to check version codes of device to request different permissions
+        // ie Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
         if (!checkPermissions()) {
             return
         }
         if (!bluetoothAdapter.isEnabled) {
             return bluetoothEnable()
         }
-        scanResults.clear()
-        scanResultAdapter.notifyDataSetChanged()
         bleScanner.startScan(null, scanSettings, scanCallback)
         isScanning = true
     }
@@ -155,9 +157,7 @@ class BluetoothFragment : Fragment() {
         AlertDialog.Builder(context)
             .setTitle("Permission required")
             .setMessage(
-                "To allow for bluetooth scanning LOCATION permissions must be granted.\n\n" +
-                        "To use bluetooth scanning BLUETOOTH permissions must be granted.\n\n" +
-                        "To use bluetooth scanning SCAN permissions must be granted."
+                "To use bluetooth scanning LOCATION, BLUETOOTH and SCAN permissions must be granted."
             )
             .setCancelable(false)
             .setPositiveButton("OK") { _, _ ->
