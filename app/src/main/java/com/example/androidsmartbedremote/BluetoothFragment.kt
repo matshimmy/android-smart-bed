@@ -51,6 +51,7 @@ class BluetoothFragment : Fragment() {
     // fragment development is complete
 
     private lateinit var btnScan: Button
+    private var listOfPermissions: MutableSet<String> = mutableSetOf<String>()
 
     private var isScanning = false
         set(value) {
@@ -114,20 +115,16 @@ class BluetoothFragment : Fragment() {
 
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
     private fun startBleScan() {
-        if (!isLocationPermissionGranted!!) {
-            requestLocationPermission()
-        } else if (!isBluetoothPermissionGranted!!) {
-            requestBluetoothPermission()
-        } else if (!isScanPermissionGranted!!) {
-            requestScanPermission()
-        } else if (!bluetoothAdapter.isEnabled) {
-            bluetoothEnable()
-        } else {
-            scanResults.clear()
-            scanResultAdapter.notifyDataSetChanged()
-            bleScanner.startScan(null, scanSettings, scanCallback)
-            isScanning = true
+        if (!checkPermissions()) {
+            return
         }
+        if (!bluetoothAdapter.isEnabled) {
+            return bluetoothEnable()
+        }
+        scanResults.clear()
+        scanResultAdapter.notifyDataSetChanged()
+        bleScanner.startScan(null, scanSettings, scanCallback)
+        isScanning = true
     }
 
     @SuppressLint("MissingPermission")
@@ -154,55 +151,48 @@ class BluetoothFragment : Fragment() {
         }
     }
 
-    private fun requestLocationPermission() {
-        if (isLocationPermissionGranted == false) {
-            AlertDialog.Builder(context)
-                .setTitle("Location permission required")
-                .setMessage("To allow for bluetooth scanning LOCATION permissions must be granted.")
-                .setCancelable(false)
-                .setPositiveButton("OK") { _, _ ->
-                    ActivityCompat.requestPermissions(
-                        context as Activity,
-                        listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(),
-                        0
-                    )
-                }.create()
-                .show()
-        }
+    private fun requestPermissionAlertDialog() {
+        AlertDialog.Builder(context)
+            .setTitle("Permission required")
+            .setMessage(
+                "To allow for bluetooth scanning LOCATION permissions must be granted.\n\n" +
+                        "To use bluetooth scanning BLUETOOTH permissions must be granted.\n\n" +
+                        "To use bluetooth scanning SCAN permissions must be granted."
+            )
+            .setCancelable(false)
+            .setPositiveButton("OK") { _, _ ->
+                sendPermissionsArray()
+            }.create()
+            .show()
     }
 
-    private fun requestBluetoothPermission() {
-        if (isBluetoothPermissionGranted == false) {
-            AlertDialog.Builder(context)
-                .setTitle("Bluetooth permission required")
-                .setMessage("To use bluetooth scanning BLUETOOTH permissions must be granted.")
-                .setCancelable(false)
-                .setPositiveButton("OK") { _, _ ->
-                    ActivityCompat.requestPermissions(
-                        context as Activity,
-                        listOf(Manifest.permission.BLUETOOTH_CONNECT).toTypedArray(),
-                        1
-                    )
-                }.create()
-                .show()
+    private fun checkPermissions(): Boolean {
+        var permissionsGranted = true
+
+        listOfPermissions.clear()
+        if (!isLocationPermissionGranted!!) {
+            listOfPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+        if (!isBluetoothPermissionGranted!!) {
+            listOfPermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+        if (!isScanPermissionGranted!!) {
+            listOfPermissions.add(Manifest.permission.BLUETOOTH_SCAN)
+        }
+        if (listOfPermissions.size > 0) {
+            requestPermissionAlertDialog()
+            permissionsGranted = false
+        }
+
+        return permissionsGranted
     }
 
-    private fun requestScanPermission() {
-        if (isScanPermissionGranted == false) {
-            AlertDialog.Builder(context)
-                .setTitle("Scan permission required")
-                .setMessage("To use bluetooth scanning SCAN permissions must be granted.")
-                .setCancelable(false)
-                .setPositiveButton("OK") { _, _ ->
-                    ActivityCompat.requestPermissions(
-                        context as Activity,
-                        listOf(Manifest.permission.BLUETOOTH_SCAN).toTypedArray(),
-                        1
-                    )
-                }.create()
-                .show()
-        }
+    private fun sendPermissionsArray() {
+        ActivityCompat.requestPermissions(
+            context as Activity,
+            listOfPermissions.toTypedArray(),
+            0
+        )
     }
 
     // Extension functions
