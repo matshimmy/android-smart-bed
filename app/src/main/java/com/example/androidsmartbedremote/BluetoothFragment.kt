@@ -62,11 +62,12 @@ class BluetoothFragment : Fragment() {
     private val scanResults = mutableListOf<ScanResult>()
     private val scanResultAdapter: ScanResultAdapter by lazy {
         ScanResultAdapter(scanResults) { result ->
-            Log.w("scanResultAdapter", "${result.device.name} was pressed")
             if (isScanning) {
                 stopBleScan()
             }
             result.device.connectGatt(context, false, ConnectionManager.gattCallback)
+            // set auto connect to true when connecting to a cached device
+            // or use onConnectionStateChange callback which is more reliable
         }
     }
 
@@ -138,13 +139,17 @@ class BluetoothFragment : Fragment() {
     private val scanCallback = object : ScanCallback() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            val indexQuery = scanResults.indexOfFirst { it.device.address == result.device.address }
-            if (indexQuery != -1) { // a scan result already exists with the same address
-                scanResults[indexQuery] = result // update item
-                scanResultAdapter.notifyItemChanged(indexQuery)
-            } else {
-                scanResults.add(result)
-                scanResultAdapter.notifyItemInserted(scanResults.size - 1)
+            // to don't displayed devices without names
+            result.device.name?.let {
+                val indexQuery =
+                    scanResults.indexOfFirst { it.device.address == result.device.address }
+                if (indexQuery != -1) { // a scan result already exists with the same address
+                    scanResults[indexQuery] = result // update item
+                    scanResultAdapter.notifyItemChanged(indexQuery)
+                } else {
+                    scanResults.add(result)
+                    scanResultAdapter.notifyItemInserted(scanResults.size - 1)
+                }
             }
         }
 
